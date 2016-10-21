@@ -10,7 +10,7 @@ from loadTestCases import load
 #A0 = 10
 #M = 25
 
-testCase = load(3,2)
+testCase = load(3,1)
 
 result = A4Part3.computeEngEnv(**testCase['input'])
 print result

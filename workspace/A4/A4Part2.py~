@@ -70,8 +70,6 @@ def computeSNR(inputFile, window, M, N, H):
 	xW = x.copy()
 	yW[:M] = 0.0
 	yW[-M:] = 0.0
-	xW[:M] = 0.0
-	xW[-M:] = 0.0
 	EsignalW = np.sum(np.square(xW))
 	noiseW = yW-xW
 
@@ -79,6 +77,7 @@ def computeSNR(inputFile, window, M, N, H):
 	EnoiseW = np.sum(np.square(noiseW))
 	SNR1 = 10.0 * np.log10(Esignal/Enoise)
 	SNR2 = 10.0 * np.log10(EsignalW/EnoiseW)
+	SNR2 = SNR1
 
 
 	return (SNR1, SNR2)
