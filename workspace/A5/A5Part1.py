@@ -2,6 +2,7 @@ import numpy as np
 from scipy.signal import get_window
 import math
 import sys, os
+
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../software/models/'))
 import dftModel as DFT
 import utilFunctions as UF
@@ -46,9 +47,11 @@ values are M = 1101, N = 2048, fEst = 1000.02 and the freqency estimation error 
 Test case 3: If you run your code with inputFile = '../../sounds/sine-200.wav', f = 200.0 Hz, the optimal
 values are M = 1201, N = 2048, fEst = 200.038 and the freqency estimation error is 0.038.
 """
+
+
 def minFreqEstErr(inputFile, f):
-    """
-    Inputs:
+	"""
+	Inputs:
             inputFile (string) = wav file including the path
             f (float) = frequency of the sinusoid present in the input audio signal (Hz)
     Output:
@@ -56,8 +59,26 @@ def minFreqEstErr(inputFile, f):
             M (int) = Window size
             N (int) = FFT size
     """
-    # analysis parameters:
-    window = 'blackman'
-    t = -40
-    
-    ### Your code here
+	# analysis parameters:
+	window = 'blackman'
+	t = -40
+
+	(fs, x) = UF.wavread(inputFile)  # read in the inputFile
+	Ns = 2 ** np.arange(24)  # List of possible FFT sizes
+	error = 0.05  # allowable frequency error in Hz
+
+	for k in xrange(1, 100):
+		M = 100 * k + 1
+		w = get_window(window, M)  # get the window
+		hM1 = int(math.floor((M + 1) / 2))  # half analysis window size by rounding
+		hM2 = int(math.floor(M / 2))  # half analysis window size by floor
+		fftbuffer = x[x.size / 2 - hM2:x.size / 2 + hM1]  # dftBuffer
+		N = Ns[np.where(Ns > M)[0][0]]  # Get the smallest N value larger than M
+		(mX, pX) = DFT.dftAnal(fftbuffer, w, N)  # Calculate the dft
+		ploc = UF.peakDetection(mX, t)  # Get peak locations
+		(iploc, ipmag, ipphase) = UF.peakInterp(mX, pX, ploc)  # parabolic interpolation to find peak values
+		fEst = fs * iploc[0] / N
+		if abs(fEst - f) <= error:
+			break
+
+	return (fEst, M, N)

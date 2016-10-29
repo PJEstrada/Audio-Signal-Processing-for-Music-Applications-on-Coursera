@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 # import test_sinusoids
-import A5Part1
+import A5Part1, A5Part4
 
 from loadTestCases import load
 
@@ -10,10 +10,12 @@ from loadTestCases import load
 #A0 = 10
 #M = 25
 
-testCase = load(1,1)
+testCase = load(4,1)
 
-result = A4Part3.computeEngEnv(**testCase['input'])
+result = A5Part4.selectFlatPhasePeak(**testCase['input'])
 print result
+print testCase['input']
+print np.std(testCase['input']['pX'])
 print testCase['output']
 
 #x = A0 * np.cos(2 * np.pi * f * np.arange(M) / fs)
