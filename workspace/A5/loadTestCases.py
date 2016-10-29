@@ -1,6 +1,6 @@
 import pickle
 
-PA = 'A3'
+PA = 'A5'
 
 def load(partId, caseId=1):
 	"""
@@ -15,8 +15,8 @@ def load(partId, caseId=1):
 	data = pickle.load(open('testInput%s.pkl'%PA,'r'))
 	part = u'%s-part-%d'%(PA, partId)
 	if not data['exampleInputs'].has_key(part):
-		print "Please provide a valid partId (>=1), number of parts in this assignment are %d"%(len(data['exampleInputs'].keys()))
-		return {'input':None, "output":None}
+		print "There are no test cases required for this part. You need to modify the required parameters and make sure the required condition is satisfied."
+		return None
 	if caseId > len(data['exampleInputs'][part]) or caseId <=0:
 		print "Please provide a valid caseId (>=1), number of test cases in this assignment are %d"%(len(data['exampleInputs'][part]))
 		return {'input':None, "output":None}

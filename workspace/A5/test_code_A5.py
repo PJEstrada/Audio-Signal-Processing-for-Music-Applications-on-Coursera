@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 # import test_sinusoids
-import A4Part1, A4Part2, A4Part3
+import A5Part1
 
 from loadTestCases import load
 
@@ -10,7 +10,7 @@ from loadTestCases import load
 #A0 = 10
 #M = 25
 
-testCase = load(3,2)
+testCase = load(1,1)
 
 result = A4Part3.computeEngEnv(**testCase['input'])
 print result

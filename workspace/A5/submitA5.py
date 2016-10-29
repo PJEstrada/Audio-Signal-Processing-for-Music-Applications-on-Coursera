@@ -12,7 +12,10 @@ import base64
 import numpy as np
 import subprocess
 import os
-
+import warnings
+warnings.filterwarnings("ignore")
+import matplotlib.pyplot as plt
+plt.ion()
 """"""""""""""""""""
 """"""""""""""""""""
 
@@ -103,9 +106,14 @@ def get_parts(partIdx, output):
     
 def submitSolution(email_address, secret, output, partIdx):
     """Submits a solution to the server. Returns (result, string)."""
-    output_64_msg = email.message.Message()
-    output_64_msg.set_payload(output)
-    email.encoders.encode_base64(output_64_msg)
+    if output == '':
+        print ''
+        print "== Submission failed: Please correct and resubmit."
+        sys.exit(1)
+    else:
+        output_64_msg = email.message.Message()
+        output_64_msg.set_payload(output)
+        email.encoders.encode_base64(output_64_msg)
     parts = get_parts(partIdx, output_64_msg.get_payload())
     
     values = { "assignmentKey" : ASSIGNMENT_KEY, \
@@ -119,7 +127,10 @@ def submitSolution(email_address, secret, output, partIdx):
 def get_all_parts(outputs):
     parts = {}
     for idx, parti in enumerate(LIST_PARTIDS):
-        parts[parti] = {"output" : outputs[idx]}
+        if outputs[idx]:
+            parts[parti] = {"output" : outputs[idx]}
+        else:
+            parts[parti] = {}
     return parts
 
 def submitSolution_all_parts(email_adress, secret):
@@ -127,10 +138,13 @@ def submitSolution_all_parts(email_adress, secret):
     outputs = []
     for idx in range(len(LIST_PARTIDS)):
         out = output(idx)
-        output_64_msg = email.message.Message()
-        output_64_msg.set_payload(out)
-        email.encoders.encode_base64(output_64_msg)
-        outputs.append(output_64_msg.get_payload() + '\n\n\n' + source(idx)) # concatenating the source code for log
+        if out == '':
+            outputs.append(None)
+        else:
+            output_64_msg = email.message.Message()
+            output_64_msg.set_payload(out)
+            email.encoders.encode_base64(output_64_msg)
+            outputs.append(output_64_msg.get_payload() + '\n\n\n' + source(idx)) # concatenating the source code for log
     parts = get_all_parts(outputs)
     values = { "assignmentKey" : ASSIGNMENT_KEY, \
              "submitterEmail" : email_adress, \
@@ -194,96 +208,119 @@ def convertNpObjToStr(obj):
         return json.dumps(dict(__ndarray__=data_b64,dtype=str(obj.dtype),shape=obj.shape))
     return json.dumps(obj)
 
-def wrongOutputTypeError(outType):
-    print "The output data type of your function doesn't match the expected data type (" + str(outType) + ")."
-    print "== Submission failed: Please correct and resubmit."
+def wrongOutputTypeError(outType, part):
+    print "\n Type error in Part " + str(part+1) + " - The output data type of your function doesn't match the expected data type: (" + str(outType) + ")."
+    #print "== Submission failed: Please correct and resubmit."
 
 def wrongSubmission():
     print "\n== Submission failed: Please check your email and token again and resubmit."
     
 ############ BEGIN ASSIGNMENT SPECIFIC CODE - YOU'LL HAVE TO EDIT THIS ##############
 
-from A3Part1 import minimizeEnergySpreadDFT
-from A3Part2 import optimalZeropad
-from A3Part3 import testRealEven
-from A3Part4 import suppressFreqDFTmodel
-from A3Part5 import zpFFTsizeExpt
+from A5Part1 import minFreqEstErr
+from A5Part2 import chirpTracker
+from A5Part3 import mainlobeTracker
+from A5Part4 import selectFlatPhasePeak
+from A5Part5 import exploreSineModel
 
 # DEFINE THE ASSIGNMENT KEY HERE
-ASSIGNMENT_KEY = '8xEvnFjFEearbwoQTjNoFw'
+ASSIGNMENT_KEY = 'duxMj1mXEeaCMRKSrCXRuw'
 
 # DEFINE THE PartIds in this list for each PA
-LIST_PARTIDS = ['H49Pi', 'SwB1b', 'Y3gtV', 'nyZLq'] ################## CHANGE THE PART IDS HERE !!
+LIST_PARTIDS = ['QOTKw', '2kGaP', 'kcPDL', 'dRKLt'] ################## CHANGE THE PART IDS HERE !!
 
 # the "Identifier" you used when creating the part
-partIds = ['A3-part-1', 'A3-part-2', 'A3-part-3', 'A3-part-4']#, 'A3-part-5']
+partIds = ['A5-part-1', 'A5-part-2', 'A5-part-3', 'A5-part-4']#, 'A5-part-5']
 
 # used to generate readable run-time information for students
-partFriendlyNames = ['Minimize energy spread in DFT of sinusoids', 'Optimal zero-padding', 'Symmetry properties of the DFT', 'Suppressing frequency components using DFT model']#, 'FFT size and zero padding (Optional)'] 
+partFriendlyNames = ['Minimizing the frequency estimation error of a sinusoid',
+                     'Tracking a two component chirp',
+                     'Tracking sinusoids of different amplitudes',
+                     'Tracking sinusoids using the phase spectrum']#,
+                     # 'Sinusoidal modeling of a multicomponent signal (optional)'] 
+
 # source files to collect (just for our records)
-sourceFiles = ['A3Part1.py', 'A3Part2.py', 'A3Part3.py', 'A3Part4.py']#, 'A3Part5.py']
+sourceFiles = ['A5Part1.py', 'A5Part2.py', 'A5Part3.py', 'A5Part4.py']#, 'A5Part5.py']
 
 def output(partIdx):
     """Uses the student code to compute the output for test cases."""
     outputString = ''
 
-    dictInp = pickle.load(open("testInputA3.pkl"))  ## load the dict
-    testCases = dictInp['testCases']
-    outputType = dictInp['outputType']
+    dictInput = pickle.load(open("testInputA5.pkl"))  ## load the dict
+    testCases = dictInput['testCases']
+    outputType = dictInput['outputType']
 
-    if partIdx == 0: # This is A3-part-1: minimizeEnergySpreadDFT
-        for line in testCases['A3-part-1']:
-            answer = minimizeEnergySpreadDFT(**line)
-            if outputType['A3-part-1'][0] == type(answer):
+    if partIdx == 0: # This is A5-part-1: minFreqEstErr
+        for line in testCases['A5-part-1']:
+            answer = minFreqEstErr(**line)
+            if (outputType['A5-part-1'][0] == type(answer)) and (len(answer) == 3):
+                if (str(type(answer[0])).count('float') and str(type(answer[1])).count('int') and       str(type(answer[2])).count('int')):
+                    for ans in answer:  
+                        outputString += convertNpObjToStr(ans) + '\n'
+                    outputString += '\n'
+                else:
+                    wrongOutputTypeError('float,int,int',partIdx)
+                    return ''
+                    #sys.exit(1) 
+            else:
+                wrongOutputTypeError(outputType['A5-part-1'][0],partIdx)
+                return ''
+                #sys.exit(1) 
+      
+    elif partIdx == 1: # This is A5-part-2: chirpTracker
+        for line in testCases['A5-part-2']:
+            answer = chirpTracker(**line)
+            if (outputType['A5-part-2'][0] == type(answer)) and (len(answer) == 5):
+                if (str(type(answer[0])).count('int') and str(type(answer[1])).count('int') and type(answer[2]) == np.ndarray and type(answer[3]) == np.ndarray and type(answer[4]) == np.ndarray):
+                    for ans in answer:
+                        outputString += convertNpObjToStr(ans) + '\n'
+                    outputString += '\n'
+                else:
+                    wrongOutputTypeError('int,int,np.ndarray,np.ndarray,np.ndarray',partIdx)
+                    return ''
+                    #sys.exit(1) 
+            else:
+                wrongOutputTypeError(outputType['A5-part-2'][0],partIdx)
+                return ''
+                #sys.exit(1) 
+      
+    elif partIdx == 2: # This is A5-part-3: mainlobeTracker
+        for line in testCases['A5-part-3']:
+            answer = mainlobeTracker(**line) 
+            if (outputType['A5-part-3'][0] == type(answer)) and (len(answer) == 5):
+                if (type(answer[0]) == str and str(type(answer[1])).count('float') and type(answer[2]) == np.ndarray and type(answer[3]) == np.ndarray and type(answer[4]) == np.ndarray):  
+                    outputString = answer[0] + '\n'
+                    for ansInd in range(len(answer)-1):
+                        outputString += convertNpObjToStr(answer[ansInd+1]) + '\n'
+                    outputString += '\n'
+                else:
+                    wrongOutputTypeError('str, float, np.ndarray, np.ndarray, np.ndarray',partIdx)
+                    return ''
+                    #sys.exit(1) 
+            else:
+                wrongOutputTypeError(outputType['A5-part-3'][0],partIdx)
+                return ''
+                #sys.exit(1)      
+        
+    elif partIdx == 3: # This is A5-part-4: selectFlatPhasePeak
+        for line in testCases['A5-part-4']:
+            answer = selectFlatPhasePeak(**line) 
+            if (outputType['A5-part-4'][0] == type(answer)):
                 outputString += convertNpObjToStr(answer) + '\n'
             else:
-                wrongOutputTypeError(outputType['A3-part-1'][0])
-                sys.exit(1)
-      
-    elif partIdx == 1: # This is A3-part-2: optimalZeropad
-        for line in testCases['A3-part-2']:
-            answer = optimalZeropad(**line)
-            if outputType['A3-part-2'][0] == type(answer):
-                outputString += convertNpObjToStr(answer) + '\n' #str(answer).strip('()') + '\n'
-            else:
-                wrongOutputTypeError(outputType['A3-part-2'][0])
-                sys.exit(1)
-      
-    elif partIdx == 2: # This is A3-part-3: testRealEven
-        for line in testCases['A3-part-3']:
-            answer = testRealEven(**line) 
-            if (outputType['A3-part-3'][0] == type(answer)) and (len(answer) == 3):
-            #answer = answer.copy()  # Important, else does not allocate continuous memory locations
-                for ans in answer:
-                    outputString += convertNpObjToStr(ans) + '\n'
-                outputString += '\n'
-            else:
-                wrongOutputTypeError(outputType['A3-part-3'][0])
-                sys.exit(1)        
+                wrongOutputTypeError(outputType['A5-part-4'][0],partIdx)
+                return ''
+                #sys.exit(1) 
         
-    elif partIdx == 3: # This is A3-part-4: suppressFreqDFTmodel
-        for line in testCases['A3-part-4']:
-            answer = suppressFreqDFTmodel(**line) 
-            if (outputType['A3-part-4'][0] == type(answer)) and (len(answer) == 2):
-                #answer = answer.copy()  # Important, else does not allocate continuous memory locations
-                for ans in answer:
-                    outputString += convertNpObjToStr(ans) + '\n'
-                outputString += '\n'
+    elif partIdx == 4: # This is A5-part-5: exploreSineModel
+        for line in testCases['A5-part-5']:
+            answer = exploreSineModel(**line) 
+            if (outputType['A5-part-5'][0] == type(answer)):
+                outputString += convertNpObjToStr(answer) + '\n'
             else:
-                wrongOutputTypeError(outputType['A3-part-4'][0])
-                sys.exit(1)
-        
-    elif partIdx == 4: # This is A3-part-5: zpFFTsizeExpt
-        for line in testCases['A3-part-5']:
-            answer = zpFFTsizeExpt(**line) 
-            if (outputType['A3-part-5'][0] == type(answer)) and (len(answer) == 3):
-            #answer = answer.copy()  # Important, else does not allocate continuous memory locations
-                for ans in answer:
-                    outputString += convertNpObjToStr(ans) + '\n'
-                outputString += '\n'
-            else:
-                wrongOutputTypeError(outputType['A3-part-5'][0])
-                sys.exit(1) 
+                wrongOutputTypeError(outputType['A5-part-5'][0],partIdx)
+                return ''
+                #sys.exit(1) 
 
     return outputString.strip()
 
